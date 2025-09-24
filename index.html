@@ -207,13 +207,14 @@
     <div class="toast" id="toast"></div>
 
    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <script>
     const FOOD_API_KEY = 'c320de96f22d4183bd13';
     const FOOD_API_BASE = 'https://openapi.foodsafetykorea.go.kr/api';
     const SERVICE_ID = 'C005';
     
     // 🚨 여기에 실제 발급받은 Google Cloud Translation API 키를 입력하세요.
-    const TRANSLATE_API_KEY = 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I';
+    const TRANSLATE_API_KEY = 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I'; 
     
     const PROXY_URL = 'https://api.allorigins.win/raw?url=';
     let currentLang = 'ko';
@@ -235,8 +236,8 @@
         const idx = langs.indexOf(currentLang);
         const nextLang = langs[(idx + 1) % langs.length];
 
-        // ❗️수정된 부분: 임시 키를 확인하는 로직을 완전히 제거했습니다.
-        if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I')) {
+        // ✅ 수정된 부분: 임시 키 대신 플레이스홀더 키를 확인하도록 변경
+        if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY')) {
             showToast('번역 기능 사용을 위해 API 키가 필요합니다.');
             return;
         }
@@ -255,7 +256,8 @@
 
     // --- API 호출 및 데이터 처리 함수 ---
     async function translateText(text, targetLang) {
-        if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I') {
+        // ✅ 수정된 부분: 임시 키 대신 플레이스홀더 키를 확인하도록 변경
+        if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY') {
             return text;
         }
         try {
@@ -281,10 +283,7 @@
     document.getElementById('searchInput').addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         const query = e.target.value.trim();
-        if (query.length < 2) {
-            document.getElementById('resultsContainer').innerHTML = '';
-            return;
-        }
+        if (query.length < 2) { document.getElementById('resultsContainer').innerHTML = ''; return; }
         searchTimeout = setTimeout(() => searchProducts(query), 500);
     });
 
