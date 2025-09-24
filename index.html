@@ -208,61 +208,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
-
-     // ✅ 이 함수 전체를 다시 복사해서 붙여넣어 보세요.
-
-async function showProductDetail(product) {
-    currentProduct = product;
-    const detailPage = document.getElementById('detailPage');
-    const detailContent = document.getElementById('detailContent');
-    
-    // 일단 로딩 화면을 먼저 보여줌
-    detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>번역 정보 로딩 중...</div>';
-    detailPage.classList.add('active');
-    document.getElementById('detailHero').textContent = '🛍️';
-    
-    try {
-        // 번역 요청들을 동시에 보냄
-        const [pName, pDesc, pCompany, pAddr] = await Promise.all([
-            translateText(product.PRDLST_NM, currentLang),
-            translateText(product.PRDLST_DCNM, currentLang),
-            translateText(product.BSSH_NM, currentLang),
-            translateText(product.SITE_ADDR, currentLang)
-        ]);
-        
-        // 모든 번역이 성공했을 때만 상세 정보 화면을 그림
-        detailContent.innerHTML = `
-            <div class="detail-title">${pName}</div>
-            <div class="detail-subtitle">${pDesc || '식품'}</div>
-            <div class="info-grid">
-                <div class="info-item"><div class="info-label">제조사</div><div class="info-value">${pCompany || '-'}</div></div>
-                <div class="info-item"><div class="info-label">소비기한</div><div class="info-value">${product.POG_DAYCNT || '-'}</div></div>
-                <div class="info-item"><div class="info-label">바코드</div><div class="info-value">${product.BAR_CD || '-'}</div></div>
-                <div class="info-item"><div class="info-label">신고번호</div><div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div></div>
-            </div>
-            <div class="section-title">제조사 정보</div>
-            <div style="font-size: 14px; color: #636E72; line-height: 1.6;">${pAddr || '주소 정보 없음'}</div>
-        `;
-    } catch (error) {
-        // 번역 중 에러가 발생하면, 로딩 화면 대신 에러 화면을 그림
-        console.error('Failed to show product detail due to translation error:', error);
-        detailContent.innerHTML = `
-            <div class="no-results" style="padding: 40px 20px;">
-                <div class="no-results-icon" style="font-size: 48px;">⚠️</div>
-                <h3 style="font-size: 18px; margin-bottom: 12px;">번역 중 오류가 발생했습니다</h3>
-                
-                <p style="color: #c0392b; background: #fbeae5; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all;">
-                    ${error.message}
-                </p>
-                
-                <p style="margin-top: 20px; font-size: 14px; color: #636E72;">
-                    Google Cloud API 설정(특히 <strong>결제 계정 연결</strong>)을 확인해주세요.
-                </p>
-            </div>
-        `;
-    }
-} // <--- 🚨 아마 이 중괄호 '}'가 빠졌을 겁니다!
-        
         const FOOD_API_KEY = 'c320de96f22d4183bd13';
         const FOOD_API_BASE = 'https://openapi.foodsafetykorea.go.kr/api';
         const SERVICE_ID = 'C005';
