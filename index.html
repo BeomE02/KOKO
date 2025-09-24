@@ -209,7 +209,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
         // API 설정
-        const FOOD_API_KEY = 'c320de96f22d4183bd13'; // ← 여기에 인증키를 입력하세요
+        const FOOD_API_KEY = 'YOUR_API_KEY_HERE'; // ← 여기에 인증키를 입력하세요
         const FOOD_API_BASE = 'http://openapi.foodsafetykorea.go.kr/api';
         const SERVICE_ID = 'C005';
         const TRANSLATE_API_KEY = ''; // Google Translate API 키 (선택사항)
@@ -293,9 +293,14 @@
             container.innerHTML = '<div class="loading"><div class="spinner"></div>검색 중...</div>';
             
             try {
+                // 올바른 API URL 형식: /키/서비스/타입/시작/끝/파라미터명=값
                 const url = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM=${encodeURIComponent(query)}`;
+                console.log('검색 URL:', url); // 디버깅용
+                
                 const response = await fetch(url);
                 const data = await response.json();
+                
+                console.log('API 응답:', data); // 디버깅용
                 
                 if (!data.C005 || !data.C005.row || data.C005.row.length === 0) {
                     container.innerHTML = '<div class="no-results"><div class="no-results-icon">🔍</div><div>검색 결과가 없습니다</div></div>';
@@ -321,7 +326,7 @@
                     </div>
                 `).join('');
             } catch (error) {
-                container.innerHTML = '<div class="loading">오류가 발생했습니다</div>';
+                container.innerHTML = '<div class="loading">오류가 발생했습니다<br><small>API 키를 확인하거나 콘솔을 확인해주세요</small></div>';
                 console.error('Search error:', error);
             }
         }
