@@ -394,11 +394,13 @@
                 const data = await response.json();
                 
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
-                    document.getElementById('productFound').textContent = `${data.C005.row[0].PRDLST_NM} 찾았습니다!`;
+                    const product = data.C005.row[0];
+                    document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
                     
+                    // 1.5초 후 상세 페이지로 이동
                     setTimeout(() => {
                         closeScanner();
-                        showProductDetail(data.C005.row[0]);
+                        showProductDetail(product);
                     }, 1500);
                 } else {
                     document.getElementById('productFound').textContent = '제품을 찾을 수 없습니다';
@@ -430,11 +432,13 @@
                 const data = await response.json();
                 
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
-                    document.getElementById('productFound').textContent = `${data.C005.row[0].PRDLST_NM} 찾았습니다!`;
+                    const product = data.C005.row[0];
+                    document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
                     
+                    // 1.5초 후 상세 페이지로 이동
                     setTimeout(() => {
                         closeScanner();
-                        showProductDetail(data.C005.row[0]);
+                        showProductDetail(product);
                     }, 1500);
                 } else {
                     document.getElementById('productFound').textContent = '제품을 찾을 수 없습니다';
@@ -451,47 +455,53 @@
             const detailPage = document.getElementById('detailPage');
             const detailContent = document.getElementById('detailContent');
             
-            detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>로딩 중...</div>';
+            // 즉시 페이지 표시
             detailPage.classList.add('active');
+            detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>로딩 중...</div>';
             
-            // 번역
-            if (currentLang !== 'ko') {
-                product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
-                product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
-                product.BSSH_NM = await translateText(product.BSSH_NM, currentLang);
-                product.SITE_ADDR = await translateText(product.SITE_ADDR, currentLang);
+            try {
+                // 번역
+                if (currentLang !== 'ko') {
+                    product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
+                    product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
+                    product.BSSH_NM = await translateText(product.BSSH_NM, currentLang);
+                    product.SITE_ADDR = await translateText(product.SITE_ADDR, currentLang);
+                }
+                
+                document.getElementById('detailHero').textContent = '🍜';
+                
+                detailContent.innerHTML = `
+                    <div class="detail-title">${product.PRDLST_NM}</div>
+                    <div class="detail-subtitle">${product.PRDLST_DCNM || '식품'}</div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">제조사</div>
+                            <div class="info-value">${product.BSSH_NM || '-'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">소비기한</div>
+                            <div class="info-value">${product.POG_DAYCNT || '-'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">바코드</div>
+                            <div class="info-value">${product.BAR_CD || '-'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">신고번호</div>
+                            <div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">제조사 정보</div>
+                    <div style="font-size: 14px; color: #636E72; line-height: 1.6;">
+                        ${product.SITE_ADDR || '주소 정보 없음'}
+                    </div>
+                `;
+            } catch (error) {
+                detailContent.innerHTML = '<div class="loading">오류가 발생했습니다</div>';
+                console.error('Product detail error:', error);
             }
-            
-            document.getElementById('detailHero').textContent = '🍜';
-            
-            detailContent.innerHTML = `
-                <div class="detail-title">${product.PRDLST_NM}</div>
-                <div class="detail-subtitle">${product.PRDLST_DCNM || '식품'}</div>
-                
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">제조사</div>
-                        <div class="info-value">${product.BSSH_NM || '-'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">소비기한</div>
-                        <div class="info-value">${product.POG_DAYCNT || '-'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">바코드</div>
-                        <div class="info-value">${product.BAR_CD || '-'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">신고번호</div>
-                        <div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div>
-                    </div>
-                </div>
-                
-                <div class="section-title">제조사 정보</div>
-                <div style="font-size: 14px; color: #636E72; line-height: 1.6;">
-                    ${product.SITE_ADDR || '주소 정보 없음'}
-                </div>
-            `;
         }
 
         function closeDetail() {
