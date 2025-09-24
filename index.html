@@ -217,7 +217,7 @@
 
         // 번역 함수
         async function translateText(text, targetLang) {
-            if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I') return text;
+            if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY') return text;
             
             try {
                 const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${TRANSLATE_API_KEY}`, {
@@ -366,6 +366,12 @@
                 
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
                     const product = data.C005.row[0];
+                    
+                    // 번역 적용
+                    if (currentLang !== 'ko') {
+                        product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
+                    }
+                    
                     document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
                     setTimeout(() => { closeScanner(); showProductDetail(product); }, 1500);
                 } else {
@@ -373,6 +379,7 @@
                 }
             } catch (error) {
                 document.getElementById('productFound').textContent = '오류가 발생했습니다';
+                console.error('Barcode error:', error);
             }
         }
 
@@ -392,6 +399,12 @@
                 
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
                     const product = data.C005.row[0];
+                    
+                    // 번역 적용
+                    if (currentLang !== 'ko') {
+                        product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
+                    }
+                    
                     document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
                     setTimeout(() => { closeScanner(); showProductDetail(product); }, 1500);
                 } else {
@@ -399,6 +412,7 @@
                 }
             } catch (error) {
                 document.getElementById('productFound').textContent = '오류가 발생했습니다';
+                console.error('Manual barcode error:', error);
             }
         }
 
