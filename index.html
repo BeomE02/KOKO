@@ -240,7 +240,7 @@
             const idx = langs.indexOf(currentLang);
             const nextLang = langs[(idx + 1) % langs.length];
 
-            if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY')) {
+            if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I')) {
                 showToast('번역 기능 사용을 위해 API 키가 필요합니다.');
                 return;
             }
@@ -286,7 +286,7 @@
         // ----------------------------------------------------------------
 
         async function translateText(text, targetLang) {
-            if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY') {
+            if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I') {
                 return text;
             }
             
