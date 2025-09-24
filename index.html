@@ -209,49 +209,107 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
 
-        // 기존의 translateText 함수를 아래 코드로 교체하세요.
-async function translateText(text, targetLang) {
-    // 번역할 필요가 없는 경우 바로 반환
-    if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY') {
-        return text;
-    }
-    
-    try {
-        const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${TRANSLATE_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                q: text,
-                target: targetLang,
-                source: 'ko'
-            })
-        });
-        
-        // 응답이 성공적이지 않을 경우 에러를 발생시킴
-        if (!response.ok) {
-            const errorData = await response.json();
-            // console에 구체적인 에러 메시지 출력
-            console.error('Google Translate API Error:', errorData.error.message);
-            throw new Error('번역 서버가 응답하지 않습니다.');
-        }
-        
-        const data = await response.json();
-        // 번역된 텍스트가 있는지 확인 후 반환
-        if (data.data && data.data.translations && data.data.translations.length > 0) {
-            return data.data.translations[0].translatedText;
-        } else {
-            return text; // 번역 결과가 없으면 원본 텍스트 반환
-        }
+       <script>
+    // --- 이전 코드는 동일 ---
+    const FOOD_API_KEY = 'c320de96f22d4183bd13';
+    const FOOD_API_BASE = 'https://openapi.foodsafetykorea.go.kr/api';
+    const SERVICE_ID = 'C005';
+    const TRANSLATE_API_KEY = 'YOUR_GOOGLE_TRANSLATE_API_KEY'; // 여기에 Google Translate API 키 입력
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    let currentLang = 'ko';
+    let currentProduct = null;
 
-    } catch (error) {
-        // 네트워크 오류나 위에서 발생시킨 에러를 잡아서 처리
-        console.error('Translation function error:', error);
-        // 사용자에게 토스트 메시지로 알림
-        showToast('번역 중 오류가 발생했습니다. API 설정을 확인하세요.');
-        // 오류 발생 시 번역되지 않은 원본 텍스트를 반환하여 로딩이 멈추지 않게 함
-        return text;
+    // ... (다른 함수들은 여기에 그대로 존재) ...
+    
+    // ✅ 1. 오류 발생 시, 구체적인 에러를 발생시키도록 수정한 함수
+    async function translateText(text, targetLang) {
+        if (targetLang === 'ko' || !text || !TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY') {
+            return text;
+        }
+        
+        try {
+            const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${TRANSLATE_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ q: text, target: targetLang, source: 'ko' })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Google이 보내준 실제 오류 메시지를 담아 에러를 발생시킴
+                throw new Error(errorData.error.message);
+            }
+            
+            const data = await response.json();
+            if (data.data && data.data.translations && data.data.translations.length > 0) {
+                return data.data.translations[0].translatedText;
+            } else {
+                return text;
+            }
+        } catch (error) {
+            console.error('Translation API error:', error);
+            // 잡은 에러를 다시 발생시켜서 이 함수를 호출한 곳에서 처리하도록 함
+            throw error;
+        }
     }
-}
+
+    // ✅ 2. 번역 함수에서 에러가 발생하면, UI에 직접 표시하도록 수정한 함수
+    async function showProductDetail(product) {
+        currentProduct = product;
+        const detailPage = document.getElementById('detailPage');
+        const detailContent = document.getElementById('detailContent');
+        
+        // 일단 로딩 화면을 먼저 보여줌
+        detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>번역 정보 로딩 중...</div>';
+        detailPage.classList.add('active');
+        document.getElementById('detailHero').textContent = '🛍️';
+        
+        try {
+            // 번역 요청들을 동시에 보냄
+            const [pName, pDesc, pCompany, pAddr] = await Promise.all([
+                translateText(product.PRDLST_NM, currentLang),
+                translateText(product.PRDLST_DCNM, currentLang),
+                translateText(product.BSSH_NM, currentLang),
+                translateText(product.SITE_ADDR, currentLang)
+            ]);
+            
+            // 모든 번역이 성공했을 때만 상세 정보 화면을 그림
+            detailContent.innerHTML = `
+                <div class="detail-title">${pName}</div>
+                <div class="detail-subtitle">${pDesc || '식품'}</div>
+                <div class="info-grid">
+                    <div class="info-item"><div class="info-label">제조사</div><div class="info-value">${pCompany || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">소비기한</div><div class="info-value">${product.POG_DAYCNT || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">바코드</div><div class="info-value">${product.BAR_CD || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">신고번호</div><div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div></div>
+                </div>
+                <div class="section-title">제조사 정보</div>
+                <div style="font-size: 14px; color: #636E72; line-height: 1.6;">${pAddr || '주소 정보 없음'}</div>
+            `;
+        } catch (error) {
+            // 번역 중 에러가 발생하면, 로딩 화면 대신 에러 화면을 그림
+            console.error('Failed to show product detail due to translation error:', error);
+            detailContent.innerHTML = `
+                <div class="no-results" style="padding: 40px 20px;">
+                    <div class="no-results-icon" style="font-size: 48px;">⚠️</div>
+                    <h3 style="font-size: 18px; margin-bottom: 12px;">번역 중 오류가 발생했습니다</h3>
+                    
+                    <p style="color: #c0392b; background: #fbeae5; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all;">
+                        ${error.message}
+                    </p>
+                    
+                    <p style="margin-top: 20px; font-size: 14px; color: #636E72;">
+                        Google Cloud API 설정(특히 <strong>결제 계정 연결</strong>)을 확인해주세요.
+                    </p>
+                </div>
+            `;
+        }
+    }
+
+    // (여기에는 제가 이전에 제공했던 모든 나머지 JavaScript 함수들이 포함되어야 합니다.)
+    // (예: searchProducts, findProductByBarcode, startScanning 등...)
+    // ...
+</script>
         
         const FOOD_API_KEY = 'c320de96f22d4183bd13';
         const FOOD_API_BASE = 'https://openapi.foodsafetykorea.go.kr/api';
