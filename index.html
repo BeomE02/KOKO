@@ -113,7 +113,7 @@
         <div class="splash-title">KOKO</div>
     </div>
 
-    <div class="home-screen" id="homeScreen">
+    <div class="home-screen">
         <div class="header">
             <div class="logo">
                 <div style="font-size: 32px;">🛍️</div>
@@ -127,8 +127,8 @@
 
         <div class="main-content">
             <div class="welcome-text">
-                <h1 id="welcomeTitle">한국 제품을 쉽게 찾아보세요</h1>
-                <p id="welcomeSubtitle">검색 방법을 선택하세요</p>
+                <h1>한국 제품을 쉽게 찾아보세요</h1>
+                <p>검색 방법을 선택하세요</p>
             </div>
 
             <div class="search-options">
@@ -208,63 +208,29 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
-        // API 설정
-        const FOOD_API_KEY = 'c320de96f22d4183bd13'; // ← 여기에 인증키를 입력하세요
+        const FOOD_API_KEY = 'c320de96f22d4183bd13';
         const FOOD_API_BASE = 'https://openapi.foodsafetykorea.go.kr/api';
         const SERVICE_ID = 'C005';
-        const TRANSLATE_API_KEY = ''; // Google Translate API 키 (선택사항)
-
         let currentLang = 'ko';
         let currentProduct = null;
 
-        // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 document.getElementById('splash').classList.add('fade-out');
-                setTimeout(() => {
-                    document.getElementById('splash').style.display = 'none';
-                }, 500);
+                setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
             }, 1500);
         });
 
-        // 번역 함수
-        async function translateText(text, targetLang) {
-            if (targetLang === 'ko' || !text) return text;
-            
-            try {
-                const url = `https://translation.googleapis.com/language/translate/v2?key=${TRANSLATE_API_KEY}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        q: text,
-                        target: targetLang,
-                        source: 'ko'
-                    })
-                });
-                
-                const data = await response.json();
-                return data.data.translations[0].translatedText;
-            } catch (error) {
-                console.error('Translation error:', error);
-                return text;
-            }
-        }
-
-        // 언어 변경
         function toggleLanguage() {
             const langs = ['ko', 'en', 'ja'];
             const flags = { ko: '🇰🇷', en: '🇺🇸', ja: '🇯🇵' };
             const codes = { ko: 'KR', en: 'EN', ja: 'JP' };
-            
             const idx = langs.indexOf(currentLang);
             currentLang = langs[(idx + 1) % langs.length];
-            
             document.getElementById('langFlag').textContent = flags[currentLang];
             document.getElementById('langCode').textContent = codes[currentLang];
         }
 
-        // 텍스트 검색
         function openTextSearch() {
             document.getElementById('searchResultsPage').classList.add('active');
             document.getElementById('searchInput').focus();
@@ -278,60 +244,46 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
-            
             if (query.length < 2) {
                 document.getElementById('resultsContainer').innerHTML = '';
                 return;
             }
-            
             searchTimeout = setTimeout(() => searchProducts(query), 500);
         });
 
-        // 제품 검색
         async function searchProducts(query) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '<div class="loading"><div class="spinner"></div>검색 중...</div>';
             
             try {
-                // 올바른 API URL 형식: /키/서비스/타입/시작/끝/파라미터명=값
-                const url = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM=${encodeURIComponent(query)}`;
-                console.log('검색 URL:', url); // 디버깅용
-                
+                const url = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/1000`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                console.log('API 응답:', data); // 디버깅용
-                
-                if (!data.C005 || !data.C005.row || data.C005.row.length === 0) {
+                if (!data.C005 || !data.C005.row) {
                     container.innerHTML = '<div class="no-results"><div class="no-results-icon">🔍</div><div>검색 결과가 없습니다</div></div>';
                     return;
                 }
                 
-                const products = data.C005.row;
+                const filtered = data.C005.row.filter(p => p.PRDLST_NM && p.PRDLST_NM.toLowerCase().includes(query.toLowerCase())).slice(0, 50);
                 
-                // 번역
-                if (currentLang !== 'ko' && TRANSLATE_API_KEY) {
-                    for (let product of products) {
-                        product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
-                        product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
-                        product.BSSH_NM = await translateText(product.BSSH_NM, currentLang);
-                    }
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="no-results"><div class="no-results-icon">🔍</div><div>검색 결과가 없습니다</div></div>';
+                    return;
                 }
                 
-                container.innerHTML = products.map(product => `
-                    <div class="result-card" onclick='showProductDetail(${JSON.stringify(product).replace(/'/g, "&apos;")})'>
-                        <div class="result-name">${product.PRDLST_NM}</div>
-                        <div class="result-desc">${product.PRDLST_DCNM || '식품'}</div>
-                        <div class="result-company">${product.BSSH_NM || '제조사 정보 없음'}</div>
+                container.innerHTML = filtered.map(p => `
+                    <div class="result-card" onclick='showProductDetail(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
+                        <div class="result-name">${p.PRDLST_NM}</div>
+                        <div class="result-desc">${p.PRDLST_DCNM || '식품'}</div>
+                        <div class="result-company">${p.BSSH_NM || '제조사 정보 없음'}</div>
                     </div>
                 `).join('');
             } catch (error) {
-                container.innerHTML = '<div class="loading">오류가 발생했습니다<br><small>API 키를 확인하거나 콘솔을 확인해주세요</small></div>';
-                console.error('Search error:', error);
+                container.innerHTML = '<div class="loading">오류가 발생했습니다</div>';
             }
         }
 
-        // 바코드 스캔
         function openBarcodeScanner() {
             document.getElementById('scannerModal').classList.add('active');
             document.getElementById('scanResult').classList.remove('active');
@@ -341,42 +293,25 @@
         function closeScanner() {
             stopScanning();
             document.getElementById('scannerModal').classList.remove('active');
-            document.getElementById('scanResult').classList.remove('active');
         }
 
         let isScanning = false;
 
         function startScanning() {
             if (isScanning) return;
-            
             Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector('#scanner-viewport'),
-                    constraints: { facingMode: "environment" }
-                },
+                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#scanner-viewport'), constraints: { facingMode: "environment" }},
                 decoder: { readers: ["ean_reader"] }
             }, function(err) {
-                if (err) {
-                    console.error(err);
-                    showToast('카메라를 사용할 수 없습니다');
-                    closeScanner();
-                    return;
-                }
+                if (err) { showToast('카메라를 사용할 수 없습니다'); closeScanner(); return; }
                 Quagga.start();
                 isScanning = true;
             });
-            
             Quagga.onDetected(onBarcodeDetected);
         }
 
         function stopScanning() {
-            if (isScanning) {
-                Quagga.stop();
-                Quagga.offDetected(onBarcodeDetected);
-                isScanning = false;
-            }
+            if (isScanning) { Quagga.stop(); Quagga.offDetected(onBarcodeDetected); isScanning = false; }
         }
 
         function restartScanning() {
@@ -387,8 +322,6 @@
         async function onBarcodeDetected(result) {
             const barcode = result.codeResult.code;
             stopScanning();
-            
-            // 바코드 번호 표시
             document.getElementById('barcodeNumber').textContent = barcode;
             document.getElementById('productFound').textContent = '제품 검색 중...';
             document.getElementById('scanResult').classList.add('active');
@@ -401,32 +334,20 @@
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
                     const product = data.C005.row[0];
                     document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
-                    
-                    // 1.5초 후 상세 페이지로 이동
-                    setTimeout(() => {
-                        closeScanner();
-                        showProductDetail(product);
-                    }, 1500);
+                    setTimeout(() => { closeScanner(); showProductDetail(product); }, 1500);
                 } else {
                     document.getElementById('productFound').textContent = '제품을 찾을 수 없습니다';
                 }
             } catch (error) {
                 document.getElementById('productFound').textContent = '오류가 발생했습니다';
-                console.error('Barcode search error:', error);
             }
         }
 
-        // 수동 바코드 검색
         async function searchByManualBarcode() {
             const barcode = document.getElementById('manualBarcode').value.trim();
-            
-            if (barcode.length < 8) {
-                showToast('올바른 바코드 번호를 입력해주세요');
-                return;
-            }
+            if (barcode.length < 8) { showToast('올바른 바코드 번호를 입력해주세요'); return; }
             
             stopScanning();
-            
             document.getElementById('barcodeNumber').textContent = barcode;
             document.getElementById('productFound').textContent = '제품 검색 중...';
             document.getElementById('scanResult').classList.add('active');
@@ -439,89 +360,43 @@
                 if (data.C005 && data.C005.row && data.C005.row.length > 0) {
                     const product = data.C005.row[0];
                     document.getElementById('productFound').textContent = `${product.PRDLST_NM} 찾았습니다!`;
-                    
-                    // 1.5초 후 상세 페이지로 이동
-                    setTimeout(() => {
-                        closeScanner();
-                        showProductDetail(product);
-                    }, 1500);
+                    setTimeout(() => { closeScanner(); showProductDetail(product); }, 1500);
                 } else {
                     document.getElementById('productFound').textContent = '제품을 찾을 수 없습니다';
                 }
             } catch (error) {
                 document.getElementById('productFound').textContent = '오류가 발생했습니다';
-                console.error('Barcode search error:', error);
             }
         }
 
-        // 상세 페이지
         async function showProductDetail(product) {
             currentProduct = product;
-            const detailPage = document.getElementById('detailPage');
-            const detailContent = document.getElementById('detailContent');
+            document.getElementById('detailPage').classList.add('active');
+            document.getElementById('detailHero').textContent = '🍜';
             
-            // 즉시 페이지 표시
-            detailPage.classList.add('active');
-            detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>로딩 중...</div>';
-            
-            try {
-                // 번역
-                if (currentLang !== 'ko' && TRANSLATE_API_KEY) {
-                    product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
-                    product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
-                    product.BSSH_NM = await translateText(product.BSSH_NM, currentLang);
-                    product.SITE_ADDR = await translateText(product.SITE_ADDR, currentLang);
-                }
-                
-                document.getElementById('detailHero').textContent = '🍜';
-                
-                detailContent.innerHTML = `
-                    <div class="detail-title">${product.PRDLST_NM}</div>
-                    <div class="detail-subtitle">${product.PRDLST_DCNM || '식품'}</div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">제조사</div>
-                            <div class="info-value">${product.BSSH_NM || '-'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">소비기한</div>
-                            <div class="info-value">${product.POG_DAYCNT || '-'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">바코드</div>
-                            <div class="info-value">${product.BAR_CD || '-'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">신고번호</div>
-                            <div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="section-title">제조사 정보</div>
-                    <div style="font-size: 14px; color: #636E72; line-height: 1.6;">
-                        ${product.SITE_ADDR || '주소 정보 없음'}
-                    </div>
-                `;
-            } catch (error) {
-                detailContent.innerHTML = '<div class="loading">오류가 발생했습니다</div>';
-                console.error('Product detail error:', error);
-            }
+            document.getElementById('detailContent').innerHTML = `
+                <div class="detail-title">${product.PRDLST_NM}</div>
+                <div class="detail-subtitle">${product.PRDLST_DCNM || '식품'}</div>
+                <div class="info-grid">
+                    <div class="info-item"><div class="info-label">제조사</div><div class="info-value">${product.BSSH_NM || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">소비기한</div><div class="info-value">${product.POG_DAYCNT || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">바코드</div><div class="info-value">${product.BAR_CD || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">신고번호</div><div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div></div>
+                </div>
+                <div class="section-title">제조사 정보</div>
+                <div style="font-size: 14px; color: #636E72; line-height: 1.6;">${product.SITE_ADDR || '주소 정보 없음'}</div>
+            `;
         }
 
         function closeDetail() {
             document.getElementById('detailPage').classList.remove('active');
         }
 
-        // 토스트
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
 </body>
