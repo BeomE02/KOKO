@@ -209,10 +209,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
         // API 설정
-        const FOOD_API_KEY = 'YOUR_API_KEY'; // 식품안전나라 API 키
+        const FOOD_API_KEY = 'c320de96f22d4183bd13'; // ← 여기에 인증키를 입력하세요
         const FOOD_API_BASE = 'http://openapi.foodsafetykorea.go.kr/api';
         const SERVICE_ID = 'C005';
-        const TRANSLATE_API_KEY = 'YOUR_TRANSLATE_KEY'; // Google Translate API 키
+        const TRANSLATE_API_KEY = ''; // Google Translate API 키 (선택사항)
 
         let currentLang = 'ko';
         let currentProduct = null;
@@ -305,7 +305,7 @@
                 const products = data.C005.row;
                 
                 // 번역
-                if (currentLang !== 'ko') {
+                if (currentLang !== 'ko' && TRANSLATE_API_KEY) {
                     for (let product of products) {
                         product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
                         product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
@@ -461,7 +461,7 @@
             
             try {
                 // 번역
-                if (currentLang !== 'ko') {
+                if (currentLang !== 'ko' && TRANSLATE_API_KEY) {
                     product.PRDLST_NM = await translateText(product.PRDLST_NM, currentLang);
                     product.PRDLST_DCNM = await translateText(product.PRDLST_DCNM, currentLang);
                     product.BSSH_NM = await translateText(product.BSSH_NM, currentLang);
