@@ -237,7 +237,7 @@
         const nextLang = langs[(idx + 1) % langs.length];
 
         // ✅ 수정된 부분: 임시 키 대신 플레이스홀더 키를 확인하도록 변경
-        if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_GOOGLE_TRANSLATE_API_KEY')) {
+        if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I')) {
             showToast('번역 기능 사용을 위해 API 키가 필요합니다.');
             return;
         }
