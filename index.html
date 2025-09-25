@@ -127,24 +127,24 @@
 
         <div class="main-content">
             <div class="welcome-text">
-                <h1>한국 제품을 쉽게 찾아보세요</h1>
-                <p>검색 방법을 선택하세요</p>
+                <h1 id="appTitle">한국 제품을 쉽게 찾아보세요</h1>
+                <p id="appSubtitle">검색 방법을 선택하세요</p>
             </div>
 
             <div class="search-options">
                 <div class="search-option" onclick="openTextSearch()">
                     <div class="option-icon">🔍</div>
                     <div class="option-info">
-                        <div class="option-title">상품명 검색</div>
-                        <div class="option-desc">이름으로 제품 찾기</div>
+                        <div class="option-title" id="searchByName">상품명 검색</div>
+                        <div class="option-desc" id="searchByNameDesc">이름으로 제품 찾기</div>
                     </div>
                 </div>
 
                 <div class="search-option" onclick="openBarcodeScanner()">
                     <div class="option-icon">📊</div>
                     <div class="option-info">
-                        <div class="option-title">바코드 스캔</div>
-                        <div class="option-desc">바코드로 정확하게 찾기</div>
+                        <div class="option-title" id="scanBarcode">바코드 스캔</div>
+                        <div class="option-desc" id="scanBarcodeDesc">바코드로 정확하게 찾기</div>
                     </div>
                 </div>
             </div>
@@ -162,7 +162,7 @@
     <div class="detail-page" id="detailPage">
         <div class="detail-header">
             <button class="back-btn" onclick="closeDetail()">←</button>
-            <div style="flex:1; font-size: 18px; font-weight: 700;">상품 상세</div>
+            <div style="flex:1; font-size: 18px; font-weight: 700;" id="productDetailTitle">상품 상세</div>
         </div>
         <div class="detail-hero" id="detailHero">🍜</div>
         <div class="detail-content" id="detailContent"></div>
@@ -172,7 +172,7 @@
         <div class="barcode-modal-content">
             <div class="barcode-header">
                 <button class="close-scan-btn" onclick="closeScanner()">✕</button>
-                <div class="scan-title">바코드 스캔</div>
+                <div class="scan-title" id="barcodeScanTitle">바코드 스캔</div>
             </div>
             <div class="scanner-container">
                 <div id="scanner-viewport">
@@ -186,20 +186,20 @@
                             </div>
                             <div class="scan-line"></div>
                         </div>
-                        <div class="scan-instruction">바코드를 화면 중앙에 맞춰주세요</div>
+                        <div class="scan-instruction" id="scanInstruction">바코드를 화면 중앙에 맞춰주세요</div>
                     </div>
                 </div>
                 <div class="scan-result" id="scanResult">
                     <div class="result-icon">✅</div>
                     <div class="barcode-number" id="barcodeNumber"></div>
                     <div class="product-found" id="productFound"></div>
-                    <button class="scan-again-btn" onclick="restartScanning()">다시 스캔</button>
+                    <button class="scan-again-btn" id="scanAgainBtn" onclick="restartScanning()">다시 스캔</button>
                 </div>
             </div>
             <div class="manual-input">
-                <div class="manual-text">또는 바코드 번호 직접 입력</div>
+                <div class="manual-text" id="manualInputText">또는 바코드 번호 직접 입력</div>
                 <input type="text" class="barcode-input" id="manualBarcode" placeholder="8801234567890">
-                <button class="search-barcode-btn" onclick="searchByManualBarcode()">검색</button>
+                <button class="search-barcode-btn" id="searchBarcodeBtn" onclick="searchByManualBarcode()">검색</button>
             </div>
         </div>
     </div>
@@ -218,6 +218,140 @@
     const PROXY_URL = 'https://api.allorigins.win/raw?url=';
     let currentLang = 'ko';
     let currentProduct = null;
+
+    // 다국어 텍스트 정의
+    const translations = {
+        ko: {
+            appTitle: '한국 제품을 쉽게 찾아보세요',
+            appSubtitle: '검색 방법을 선택하세요',
+            searchByName: '상품명 검색',
+            searchByNameDesc: '이름으로 제품 찾기',
+            scanBarcode: '바코드 스캔',
+            scanBarcodeDesc: '바코드로 정확하게 찾기',
+            searchPlaceholder: '상품명을 입력하세요',
+            productDetail: '상품 상세',
+            manufacturer: '제조사',
+            expiry: '소비기한',
+            barcode: '바코드',
+            reportNumber: '신고번호',
+            manufacturerInfo: '제조사 정보',
+            noAddress: '주소 정보 없음',
+            searching: '검색 중...',
+            noResults: '검색 결과가 없습니다',
+            loadingInfo: '정보 로딩 중...',
+            errorLoading: '정보를 불러오는 중 오류 발생',
+            checkApiSettings: 'Google Cloud API 설정 (결제 계정 연결 등)을 확인해주세요.',
+            barcodeTitle: '바코드 스캔',
+            barcodeInstruction: '바코드를 화면 중앙에 맞춰주세요',
+            manualInput: '또는 바코드 번호 직접 입력',
+            search: '검색',
+            scanAgain: '다시 스캔',
+            searching_product: '제품 검색 중...',
+            product_found: '찾았습니다!',
+            product_not_found: '제품을 찾을 수 없습니다',
+            error_occurred: '오류가 발생했습니다',
+            camera_error: '카메라를 사용할 수 없습니다.',
+            invalid_barcode: '올바른 바코드 번호를 입력해주세요',
+            translation_needed: '번역 기능 사용을 위해 API 키가 필요합니다.'
+        },
+        en: {
+            appTitle: 'Easily Find Korean Products',
+            appSubtitle: 'Choose your search method',
+            searchByName: 'Search by Name',
+            searchByNameDesc: 'Find products by name',
+            scanBarcode: 'Scan Barcode',
+            scanBarcodeDesc: 'Find accurately with barcode',
+            searchPlaceholder: 'Enter product name',
+            productDetail: 'Product Details',
+            manufacturer: 'Manufacturer',
+            expiry: 'Expiry',
+            barcode: 'Barcode',
+            reportNumber: 'Report No.',
+            manufacturerInfo: 'Manufacturer Info',
+            noAddress: 'No address information',
+            searching: 'Searching...',
+            noResults: 'No search results',
+            loadingInfo: 'Loading information...',
+            errorLoading: 'Error loading information',
+            checkApiSettings: 'Please check Google Cloud API settings (billing account connection, etc.)',
+            barcodeTitle: 'Barcode Scanner',
+            barcodeInstruction: 'Align barcode to center of screen',
+            manualInput: 'Or enter barcode number manually',
+            search: 'Search',
+            scanAgain: 'Scan Again',
+            searching_product: 'Searching product...',
+            product_found: 'Found!',
+            product_not_found: 'Product not found',
+            error_occurred: 'An error occurred',
+            camera_error: 'Camera not available.',
+            invalid_barcode: 'Please enter a valid barcode number',
+            translation_needed: 'API key required for translation feature.'
+        },
+        ja: {
+            appTitle: '韓国製品を簡単に検索',
+            appSubtitle: '検索方法を選択してください',
+            searchByName: '商品名検索',
+            searchByNameDesc: '名前で製品を検索',
+            scanBarcode: 'バーコードスキャン',
+            scanBarcodeDesc: 'バーコードで正確に検索',
+            searchPlaceholder: '商品名を入力してください',
+            productDetail: '商品詳細',
+            manufacturer: 'メーカー',
+            expiry: '消費期限',
+            barcode: 'バーコード',
+            reportNumber: '申告番号',
+            manufacturerInfo: 'メーカー情報',
+            noAddress: '住所情報なし',
+            searching: '検索中...',
+            noResults: '検索結果がありません',
+            loadingInfo: '情報読み込み中...',
+            errorLoading: '情報の読み込み中にエラーが発生',
+            checkApiSettings: 'Google Cloud API設定（請求アカウント接続など）を確認してください。',
+            barcodeTitle: 'バーコードスキャン',
+            barcodeInstruction: 'バーコードを画面中央に合わせてください',
+            manualInput: 'またはバーコード番号を直接入力',
+            search: '検索',
+            scanAgain: 'もう一度スキャン',
+            searching_product: '製品検索中...',
+            product_found: '見つかりました！',
+            product_not_found: '製品が見つかりません',
+            error_occurred: 'エラーが発生しました',
+            camera_error: 'カメラが使用できません。',
+            invalid_barcode: '正しいバーコード番号を入力してください',
+            translation_needed: '翻訳機能にはAPIキーが必要です。'
+        }
+    };
+
+    // 현재 언어의 텍스트 가져오기
+    function getText(key) {
+        return translations[currentLang][key] || translations['ko'][key] || key;
+    }
+
+    // UI 텍스트 업데이트
+    function updateUITexts() {
+        // 메인 화면
+        document.getElementById('appTitle').textContent = getText('appTitle');
+        document.getElementById('appSubtitle').textContent = getText('appSubtitle');
+        
+        // 검색 옵션
+        document.getElementById('searchByName').textContent = getText('searchByName');
+        document.getElementById('searchByNameDesc').textContent = getText('searchByNameDesc');
+        document.getElementById('scanBarcode').textContent = getText('scanBarcode');
+        document.getElementById('scanBarcodeDesc').textContent = getText('scanBarcodeDesc');
+        
+        // 검색 입력창
+        document.getElementById('searchInput').placeholder = getText('searchPlaceholder');
+        
+        // 상세 페이지 헤더
+        document.getElementById('productDetailTitle').textContent = getText('productDetail');
+        
+        // 바코드 스캐너
+        document.getElementById('barcodeScanTitle').textContent = getText('barcodeTitle');
+        document.getElementById('scanInstruction').textContent = getText('barcodeInstruction');
+        document.getElementById('manualInputText').textContent = getText('manualInput');
+        document.getElementById('searchBarcodeBtn').textContent = getText('search');
+        document.getElementById('scanAgainBtn').textContent = getText('scanAgain');
+    }
 
     // --- 초기화 및 UI 관련 함수 ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -239,7 +373,7 @@
 
         // ✅ API 키가 설정되어 있는지 확인
         if (nextLang !== 'ko' && (!TRANSLATE_API_KEY || TRANSLATE_API_KEY === 'YOUR_ACTUAL_API_KEY_HERE')) {
-            showToast('번역 기능 사용을 위해 API 키가 필요합니다.');
+            showToast(getText('translation_needed'));
             return;
         }
         
@@ -248,6 +382,17 @@
         document.getElementById('langCode').textContent = codes[currentLang];
         
         console.log('✅ 언어 설정 완료:', currentLang);
+        
+        // UI 텍스트 업데이트
+        updateUITexts();
+        
+        // 🧪 번역 기능 즉시 테스트 (디버깅용)
+        if (currentLang !== 'ko') {
+            console.log('🧪 번역 기능 테스트 시작...');
+            translateText('안녕하세요', currentLang)
+                .then(result => console.log('🎯 테스트 번역 결과:', result))
+                .catch(error => console.error('❌ 테스트 번역 오류:', error));
+        }
     }
 
     function openTextSearch() { document.getElementById('searchResultsPage').classList.add('active'); document.getElementById('searchInput').focus(); }
@@ -304,14 +449,14 @@
 
     async function searchProducts(query) {
         const container = document.getElementById('resultsContainer');
-        container.innerHTML = '<div class="loading"><div class="spinner"></div>검색 중...</div>';
+        container.innerHTML = `<div class="loading"><div class="spinner"></div>${getText('searching')}</div>`;
         try {
             const originalUrl = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM=${encodeURIComponent(query)}`;
             const response = await fetch(PROXY_URL + encodeURIComponent(originalUrl));
             const data = await response.json();
             if (data.C005.RESULT?.CODE === 'ERROR') throw new Error(data.C005.RESULT.MSG);
             if (!data.C005?.row) {
-                container.innerHTML = '<div class="no-results"><div class="no-results-icon">😢</div><div>검색 결과가 없습니다</div></div>';
+                container.innerHTML = `<div class="no-results"><div class="no-results-icon">😢</div><div>${getText('noResults')}</div></div>`;
                 return;
             }
             container.innerHTML = data.C005.row.map(p => `
@@ -328,7 +473,7 @@
     
     async function findProductByBarcode(barcode) {
         document.getElementById('barcodeNumber').textContent = barcode;
-        document.getElementById('productFound').textContent = '제품 검색 중...';
+        document.getElementById('productFound').textContent = getText('searching_product');
         document.getElementById('scanResult').classList.add('active');
         try {
             const originalUrl = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/10/BAR_CD=${barcode}`;
@@ -338,13 +483,13 @@
             if (data.C005?.row?.length > 0) {
                 const product = data.C005.row[0];
                 const productName = await translateText(product.PRDLST_NM, currentLang).catch(() => product.PRDLST_NM);
-                document.getElementById('productFound').textContent = `${productName} 찾았습니다!`;
+                document.getElementById('productFound').textContent = `${productName} ${getText('product_found')}`;
                 setTimeout(() => { closeScanner(); showProductDetail(product); }, 1500);
             } else {
-                document.getElementById('productFound').textContent = '제품을 찾을 수 없습니다';
+                document.getElementById('productFound').textContent = getText('product_not_found');
             }
         } catch (error) {
-            document.getElementById('productFound').textContent = '오류가 발생했습니다';
+            document.getElementById('productFound').textContent = getText('error_occurred');
             console.error('Barcode search error:', error);
         }
     }
@@ -353,7 +498,7 @@
         currentProduct = product;
         const detailPage = document.getElementById('detailPage');
         const detailContent = document.getElementById('detailContent');
-        detailContent.innerHTML = '<div class="loading"><div class="spinner"></div>정보 로딩 중...</div>';
+        detailContent.innerHTML = `<div class="loading"><div class="spinner"></div>${getText('loadingInfo')}</div>`;
         detailPage.classList.add('active');
         document.getElementById('detailHero').textContent = '🛍️';
         try {
@@ -367,21 +512,21 @@
                 <div class="detail-title">${pName}</div>
                 <div class="detail-subtitle">${pDesc || '식품'}</div>
                 <div class="info-grid">
-                    <div class="info-item"><div class="info-label">제조사</div><div class="info-value">${pCompany || '-'}</div></div>
-                    <div class="info-item"><div class="info-label">소비기한</div><div class="info-value">${product.POG_DAYCNT || '-'}</div></div>
-                    <div class="info-item"><div class="info-label">바코드</div><div class="info-value">${product.BAR_CD || '-'}</div></div>
-                    <div class="info-item"><div class="info-label">신고번호</div><div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">${getText('manufacturer')}</div><div class="info-value">${pCompany || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">${getText('expiry')}</div><div class="info-value">${product.POG_DAYCNT || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">${getText('barcode')}</div><div class="info-value">${product.BAR_CD || '-'}</div></div>
+                    <div class="info-item"><div class="info-label">${getText('reportNumber')}</div><div class="info-value">${product.PRDLST_REPORT_NO || '-'}</div></div>
                 </div>
-                <div class="section-title">제조사 정보</div>
-                <div style="font-size: 14px; color: #636E72; line-height: 1.6;">${pAddr || '주소 정보 없음'}</div>
+                <div class="section-title">${getText('manufacturerInfo')}</div>
+                <div style="font-size: 14px; color: #636E72; line-height: 1.6;">${pAddr || getText('noAddress')}</div>
             `;
         } catch (error) {
             detailContent.innerHTML = `
                 <div class="no-results" style="padding: 40px 20px;">
                     <div class="no-results-icon" style="font-size: 48px;">⚠️</div>
-                    <h3 style="font-size: 18px; margin-bottom: 12px;">정보를 불러오는 중 오류 발생</h3>
+                    <h3 style="font-size: 18px; margin-bottom: 12px;">${getText('errorLoading')}</h3>
                     <p style="color: #c0392b; background: #fbeae5; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all;">${error.message}</p>
-                    <p style="margin-top: 20px; font-size: 14px; color: #636E72;">Google Cloud API 설정 (결제 계정 연결 등)을 확인해주세요.</p>
+                    <p style="margin-top: 20px; font-size: 14px; color: #636E72;">${getText('checkApiSettings')}</p>
                 </div>
             `;
         }
@@ -398,7 +543,12 @@
             decoder: { readers: ["ean_reader"] },
             locate: true
         }, (err) => {
-            if (err) { console.error('Quagga init error:', err); showToast('카메라를 사용할 수 없습니다.'); closeScanner(); return; }
+            if (err) { 
+                console.error('Quagga init error:', err); 
+                showToast(getText('camera_error')); 
+                closeScanner(); 
+                return; 
+            }
             Quagga.start(); isScanning = true;
         });
         Quagga.onProcessed((result) => {
@@ -422,7 +572,15 @@
         stopScanning(); findProductByBarcode(barcode);
     }
     function restartScanning() { document.getElementById('scanResult').classList.remove('active'); startScanning(); }
-    function searchByManualBarcode() { const barcode = document.getElementById('manualBarcode').value.trim(); if (barcode.length < 8) { showToast('올바른 바코드 번호를 입력해주세요'); return; } stopScanning(); findProductByBarcode(barcode); }
+    function searchByManualBarcode() { 
+        const barcode = document.getElementById('manualBarcode').value.trim(); 
+        if (barcode.length < 8) { 
+            showToast(getText('invalid_barcode')); 
+            return; 
+        } 
+        stopScanning(); 
+        findProductByBarcode(barcode); 
+    }
 </script>
 </body>
 </html>
