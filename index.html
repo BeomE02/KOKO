@@ -742,31 +742,106 @@
         }
     }
 
-    // --- 바코드 스캐너 관련 함수 ---
-    let isScanning = false, lastBarcode = null, lastDetectionTime = 0;
+    // --- 바코드 스캐너 관련 함수 (개선된 버전) ---
+    let isScanning = false;
+    let scanLocked = false;
+    let detectionHistory = [];
+    const STABLE_COUNT = 3;
+
+    // EAN-13 바코드 정규화
+    function normalizeEAN13(str) {
+        const digits = (str || '').replace(/\D/g, '');
+        return digits.length >= 13 ? digits.slice(0, 13) : digits.length >= 8 ? digits : null;
+    }
+
+    // EAN-13 체크섬 검증
+    function isValidEAN13(code) {
+        if (!/^\d{13}$/.test(code)) return false;
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            sum += parseInt(code[i], 10) * (i % 2 ? 3 : 1);
+        }
+        return (10 - (sum % 10)) % 10 === parseInt(code[12], 10);
+    }
+
+    // 바코드 검출 핸들러 (안정성 개선)
+    function onBarcodeDetected(result) {
+        if (scanLocked) return;
+        
+        const raw = result.codeResult?.code;
+        const normalized = normalizeEAN13(raw);
+        if (!normalized) return;
+        
+        // EAN-13 검증 (13자리인 경우만)
+        if (normalized.length === 13 && !isValidEAN13(normalized)) return;
+
+        detectionHistory.push(normalized);
+        const recent = detectionHistory.slice(-STABLE_COUNT);
+        const stable = recent.length === STABLE_COUNT && recent.every(v => v === recent[0]);
+        
+        if (!stable) return;
+
+        // 안정된 바코드 검출됨
+        scanLocked = true;
+        console.log('안정된 바코드 검출:', normalized);
+        
+        // 진동 피드백
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+        
+        stopScanning();
+        findProductByBarcode(normalized);
+    }
     
     function startScanning() {
         if (isScanning) return;
+        
+        console.log('바코드 스캐닝 시작');
+        
+        // 상태 초기화
+        scanLocked = false;
+        detectionHistory = [];
+        
+        // Quagga 라이브러리 확인
+        if (typeof Quagga === 'undefined') {
+            console.error('Quagga 라이브러리가 로드되지 않음');
+            showToast('바코드 스캐너를 사용할 수 없습니다. 페이지를 새로고침해보세요.');
+            fallbackToManualInput();
+            return;
+        }
+        
         Quagga.init({
             inputStream: { 
                 name: "Live", 
                 type: "LiveStream", 
                 target: document.querySelector('#scanner-viewport'), 
-                constraints: { width: 640, height: 480, facingMode: "environment" } 
+                constraints: { 
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    focusMode: "continuous"
+                },
+                area: { top: "15%", right: "15%", left: "15%", bottom: "15%" }
             },
             locator: { patchSize: "medium", halfSample: true },
             numOfWorkers: navigator.hardwareConcurrency || 4,
-            decoder: { readers: ["ean_reader"] },
+            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"], multiple: false },
             locate: true
         }, (err) => {
             if (err) { 
-                console.error('Quagga init error:', err); 
-                showToast(getText('camera_error')); 
-                closeScanner(); 
+                console.error('Quagga 초기화 오류:', err); 
+                showToast('카메라를 사용할 수 없습니다: ' + err.message); 
+                fallbackToManualInput();
                 return; 
             }
+            
+            console.log('Quagga 초기화 성공');
             Quagga.start(); 
             isScanning = true;
+            
+            // 이벤트 핸들러 등록
+            Quagga.onDetected(onBarcodeDetected);
         });
         
         Quagga.onProcessed((result) => {
@@ -784,31 +859,35 @@
                     Quagga.ImageDebug.drawPath(result.line, {x:'x',y:'y'}, drawingCtx, {color:'red',lineWidth:3});
             }
         });
-        
-        Quagga.onDetected(onBarcodeDetected);
     }
     
     function stopScanning() { 
-        if (isScanning) { 
+        if (isScanning && typeof Quagga !== 'undefined') { 
             Quagga.offProcessed(); 
             Quagga.offDetected(onBarcodeDetected); 
             Quagga.stop(); 
-            isScanning = false; 
+            isScanning = false;
+            console.log('바코드 스캐닝 중지');
         } 
     }
     
-    function onBarcodeDetected(result) {
-        const barcode = result.codeResult.code;
-        const now = Date.now();
-        if (barcode === lastBarcode && (now - lastDetectionTime < 3000)) return;
-        lastBarcode = barcode; 
-        lastDetectionTime = now;
-        stopScanning(); 
-        findProductByBarcode(barcode);
+    // 카메라 사용 불가 시 수동 입력으로 대체
+    function fallbackToManualInput() {
+        closeScanner();
+        showToast('카메라를 사용할 수 없어 수동 입력 모드로 전환합니다.');
+        
+        setTimeout(() => {
+            const manualInput = prompt('바코드 번호를 직접 입력해주세요:');
+            if (manualInput && manualInput.trim().length >= 8) {
+                findProductByBarcode(manualInput.trim());
+            }
+        }, 1000);
     }
     
     function restartScanning() { 
         document.getElementById('scanResult').classList.remove('active'); 
+        scanLocked = false;
+        detectionHistory = [];
         startScanning(); 
     }
     
@@ -817,9 +896,16 @@
         if (barcode.length < 8) { 
             showToast(getText('invalid_barcode')); 
             return; 
-        } 
+        }
+        
+        const normalized = normalizeEAN13(barcode);
+        if (!normalized) {
+            showToast('올바른 바코드 형식이 아닙니다');
+            return;
+        }
+        
         stopScanning(); 
-        findProductByBarcode(barcode); 
+        findProductByBarcode(normalized); 
     }
 </script>
 </body>
