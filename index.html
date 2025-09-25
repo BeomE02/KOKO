@@ -1,4 +1,54 @@
-<!DOCTYPE html>
+async function searchProducts(query) {
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = `<div class="loading"><div class="spinner"></div>${getText('searching')}</div>`;
+        
+        console.log('🔍 제품 검색 시작:', query);
+        
+        try {
+            // 간단한 검색 URL
+            const originalUrl = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/50`;
+            console.log('📡 요청 URL:', originalUrl);
+            
+            const response = await fetch(PROXY_URL + encodeURIComponent(originalUrl));
+            console.log('📡 API 응답 상태:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('📦 API 응답:', data);
+            
+            // 간단한 데이터 추출
+            let allProducts = [];
+            
+            if (data.C005?.row) {
+                allProducts = Array.isArray(data.C005.row) ? data.C005.row : [data.C005.row];
+            } else if (data.row) {
+                allProducts = Array.isArray(data.row) ? data.row : [data.row];
+            }
+            
+            console.log('📋 전체 제품 수:', allProducts.length);
+            
+            if (allProducts.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">😢</div>
+                        <div>데이터를 불러올 수 없습니다</div>
+                    </div>`;
+                return;
+            }
+            
+            // 클라이언트에서 검색어 필터링
+            const searchQuery = query.toLowerCase().trim();
+            const filteredProducts = allProducts.filter(product => {
+                const name = (product.PRDLST_NM || '').toLowerCase();
+                const company = (product.BSSH_NM || '').toLowerCase();
+                
+                return name.includes(searchQuery) || company.includes(searchQuery);
+            });
+            
+            console.log<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -225,7 +275,7 @@
     const SERVICE_ID = 'C005';
     
     // 🚨 여기에 실제 발급받은 Google Cloud Translation API 키를 입력하세요.
-    const TRANSLATE_API_KEY = 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I';
+    const TRANSLATE_API_KEY = 'YOUR_ACTUAL_API_KEY_HERE';
     
     const PROXY_URL = 'https://api.allorigins.win/raw?url=';
     let currentLang = 'ko';
@@ -466,6 +516,144 @@
         console.log('🔍 제품 검색 시작:', query);
         
         try {
+            // 여러 검색 방식 시도
+            const searchAttempts = [
+                // 방식 1: 표준 URL 패턴
+                `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM=${encodeURIComponent(query)}`,
+                // 방식 2: 다른 파라미터 형식
+                `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100?PRDLST_NM=${encodeURIComponent(query)}`,
+                // 방식 3: 제품명 검색 with 키워드
+                `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM/LIKE/${encodeURIComponent(query)}`,
+                // 방식 4: 전체 목록에서 클라이언트 필터링을 위한 큰 범위
+                `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/1000`
+            ];
+            
+            let products = null;
+            let data = null;
+            
+            for (let i = 0; i < searchAttempts.length; i++) {
+                const originalUrl = searchAttempts[i];
+                console.log(`📡 검색 시도 ${i + 1}/4:`, originalUrl);
+                
+                try {
+                    const response = await fetch(PROXY_URL + encodeURIComponent(originalUrl));
+                    console.log('📡 API 응답 상태:', response.status, response.statusText);
+                    
+                    data = await response.json();
+                    console.log('📦 API 응답 데이터:', data);
+                    
+                    // API 응답 구조 확인 및 처리
+                    if (data.C005?.RESULT?.CODE === 'ERROR') {
+                        console.log('❌ API 에러:', data.C005.RESULT.MSG);
+                        continue; // 다음 방식 시도
+                    }
+                    
+                    // 여러 가능한 응답 구조 처리
+                    if (data.C005?.row) {
+                        products = Array.isArray(data.C005.row) ? data.C005.row : [data.C005.row];
+                    } else if (data.row) {
+                        products = Array.isArray(data.row) ? data.row : [data.row];
+                    }
+                    
+                    if (products && products.length > 0) {
+                        console.log(`✅ 검색 시도 ${i + 1} 성공! 총 제품 수:`, products.length);
+                        break; // 성공하면 루프 종료
+                    }
+                } catch (fetchError) {
+                    console.log(`❌ 검색 시도 ${i + 1} 실패:`, fetchError.message);
+                    continue;
+                }
+            }
+            
+            // 클라이언트 사이드 필터링 (서버 검색이 안되는 경우)
+            if (products && products.length > 0) {
+                // 검색어가 포함된 제품만 필터링
+                const filteredProducts = products.filter(p => {
+                    const productName = (p.PRDLST_NM || '').toLowerCase();
+                    const companyName = (p.BSSH_NM || '').toLowerCase();
+                    const searchQuery = query.toLowerCase();
+                    
+                    return productName.includes(searchQuery) || 
+                           companyName.includes(searchQuery) ||
+                           productName.replace(/\s+/g, '').includes(searchQuery.replace(/\s+/g, ''));
+                });
+                
+                console.log('🎯 필터링된 제품 수:', filteredProducts.length);
+                
+                if (filteredProducts.length > 0) {
+                    // 관련성 순으로 정렬 (제품명에 검색어가 포함된 것 우선)
+                    filteredProducts.sort((a, b) => {
+                        const aName = (a.PRDLST_NM || '').toLowerCase();
+                        const bName = (b.PRDLST_NM || '').toLowerCase();
+                        const searchQuery = query.toLowerCase();
+                        
+                        const aExactMatch = aName.includes(searchQuery);
+                        const bExactMatch = bName.includes(searchQuery);
+                        
+                        if (aExactMatch && !bExactMatch) return -1;
+                        if (!aExactMatch && bExactMatch) return 1;
+                        return 0;
+                    });
+                    
+                    // 상위 20개만 표시
+                    const displayProducts = filteredProducts.slice(0, 20);
+                    
+                    container.innerHTML = displayProducts.map((p, index) => `
+                        <div class="result-card" onclick='showProductDetail(${JSON.stringify(p).replace(/'/g, "&apos;")})' style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
+                            <div class="result-name">
+                                ${highlightSearchTerm(p.PRDLST_NM || '제품명 없음', query)}
+                            </div>
+                            <div class="result-desc">${p.PRDLST_DCNM || '식품'}</div>
+                            <div class="result-company">
+                                ${highlightSearchTerm(p.BSSH_NM || '제조사 정보 없음', query)}
+                            </div>
+                            ${p.BAR_CD ? `<div style="font-size: 11px; color: #999; margin-top: 4px;">바코드: ${p.BAR_CD}</div>` : ''}
+                        </div>
+                    `).join('');
+                    
+                    return; // 성공적으로 표시했으므로 함수 종료
+                }
+            }
+            
+            // 검색 결과가 없는 경우
+            container.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <div>'${query}' 에 대한 검색 결과가 없습니다</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 10px;">
+                        • 다른 키워드로 시도해보세요<br>
+                        • 띄어쓰기를 확인해보세요<br>
+                        • "라면", "김치", "우유" 등을 검색해보세요
+                    </div>
+                </div>`;
+            
+        } catch (error) {
+            console.error('❌ 검색 오류:', error);
+            container.innerHTML = `
+                <div class="loading" style="color: #e74c3c;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                    검색 중 오류가 발생했습니다<br>
+                    <div style="font-size: 12px; margin-top: 10px; color: #999;">
+                        ${error.message}
+                    </div>
+                    <button onclick="searchProducts('${query}')" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        다시 시도
+                    </button>
+                </div>`;
+        }
+    }
+    
+    // 검색어 하이라이트 함수
+    function highlightSearchTerm(text, searchTerm) {
+        if (!searchTerm || !text) return text;
+        
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\    async function searchProducts(query) {
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = `<div class="loading"><div class="spinner"></div>${getText('searching')}</div>`;
+        
+        console.log('🔍 제품 검색 시작:', query);
+        
+        try {
             const originalUrl = `${FOOD_API_BASE}/${FOOD_API_KEY}/${SERVICE_ID}/json/1/100/PRDLST_NM=${encodeURIComponent(query)}`;
             console.log('📡 요청 URL:', originalUrl);
             
@@ -523,6 +711,8 @@
                     </div>
                 </div>`;
         }
+    }')})`, 'gi');
+        return text.replace(regex, '<span style="background: #fff3cd; font-weight: bold;">$1</span>');
     }
     
     async function findProductByBarcode(barcode) {
