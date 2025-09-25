@@ -219,7 +219,7 @@
     const SERVICE_ID = 'C005';
     
     // 🚨 여기에 실제 발급받은 Google Cloud Translation API 키를 입력하세요.
-    const TRANSLATE_API_KEY = 'AIzaSyArr1P7f6JuAL8Xz8ECiHi8WkfbNRn4Z7I';
+    const TRANSLATE_API_KEY = 'YOUR_ACTUAL_API_KEY_HERE';
     
     const PROXY_URL = 'https://api.allorigins.win/raw?url=';
     let currentLang = 'ko';
@@ -560,8 +560,8 @@
         if (!searchTerm || !text) return text;
         
         try {
-            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\        if (query.length < 2) { 
-            document.')})`, 'gi');
+            const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedTerm})`, 'gi');
             return text.replace(regex, '<mark style="background: #fff3cd; padding: 1px 2px;">$1</mark>');
         } catch (e) {
             return text;
