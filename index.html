@@ -5,111 +5,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KOKO - Korean Product Guide</title>
     <style>
+        /* --- Reset & Global Styles --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #F7F8FA; min-height: 100vh; }
-        
-        .splash-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #5B5FDE 0%, #8B5CF6 100%); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+
+        :root {
+            --primary-black: #111111;
+            --primary-white: #ffffff;
+            --accent-gray: #777777;
+            --light-gray: #f2f2f2;
+            --border-color: #dddddd;
+            --hover-color: #e8e8e8;
+            --focus-ring: rgba(17, 17, 17, 0.15);
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-white);
+            color: var(--primary-black);
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Splash Screen --- */
+        .splash-screen {
+            position: fixed; inset: 0; background: var(--primary-black); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease-out;
+            gap: 1.5rem;
+            color: var(--primary-white);
+        }
         .splash-screen.fade-out { opacity: 0; pointer-events: none; }
-        .splash-logo { font-size: 80px; margin-bottom: 20px; }
-        .splash-title { color: white; font-size: 36px; font-weight: 800; }
-        
-        .home-screen { min-height: 100vh; padding: 20px; display: flex; flex-direction: column; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .logo { display: flex; align-items: center; gap: 10px; }
-        .logo-text { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #5B5FDE, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .lang-btn { padding: 8px 16px; background: white; border: none; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        
-        .main-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 30px; }
-        .welcome-text h1 { font-size: 32px; margin-bottom: 10px; }
-        .welcome-text p { font-size: 16px; color: #636E72; }
-        
-        .search-options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-        .search-option { background: white; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .search-option:active { transform: scale(0.98); }
-        .option-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #5B5FDE, #8B5CF6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .option-info { flex: 1; text-align: left; }
-        .option-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .option-desc { font-size: 13px; color: #636E72; }
-        
-        .search-results-page { position: fixed; inset: 0; background: #F7F8FA; z-index: 1000; transform: translateY(100%); transition: transform 0.3s; }
-        .search-results-page.active { transform: translateY(0); }
-        .search-header { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .back-btn { width: 40px; height: 40px; border-radius: 50%; background: #F7F8FA; border: none; font-size: 20px; cursor: pointer; }
-        .search-input { flex: 1; padding: 12px 16px; border: none; border-radius: 12px; background: #F7F8FA; font-size: 16px; outline: none; }
-        
-        .results-container { padding: 16px; }
-        .result-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: transform 0.2s; }
-        .result-card:hover { transform: translateY(-2px); }
-        .result-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .result-desc { font-size: 14px; color: #636E72; margin-bottom: 8px; }
-        .result-company { font-size: 12px; color: #5B5FDE; }
-        
-        .detail-page { position: fixed; inset: 0; background: white; z-index: 2000; transform: translateX(100%); transition: transform 0.35s; overflow-y: auto; }
-        .detail-page.active { transform: translateX(0); }
-        .detail-header { position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100; }
-        .detail-hero { height: 200px; background: linear-gradient(135deg, #5B5FDE, #8B5CF6); display: flex; align-items: center; justify-content: center; color: white; font-size: 80px; }
-        .detail-content { padding: 24px 20px; }
-        .detail-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-        .detail-subtitle { font-size: 14px; color: #636E72; margin-bottom: 16px; }
-        
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-        .info-item { background: #F7F8FA; padding: 12px; border-radius: 12px; }
-        .info-label { font-size: 11px; color: #636E72; margin-bottom: 4px; }
-        .info-value { font-size: 14px; font-weight: 700; }
-        
-        .section-title { font-size: 18px; font-weight: 700; margin: 24px 0 12px; }
-        
-        .scanner-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; display: none; }
-        .scanner-modal.active { display: block; }
-        
-        .barcode-modal-content { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; margin: 50px auto; overflow: hidden; }
-        .barcode-header { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; color: white; }
-        .close-scan-btn { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .scan-title { font-size: 18px; font-weight: 700; flex: 1; text-align: center; margin-right: 32px; }
-        
-        .scanner-container { position: relative; background: #000; height: 300px; overflow: hidden; }
-        #scanner-viewport { width: 100%; height: 100%; position: relative; }
-        #scanner-viewport video, #scanner-viewport canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
-        
-        .scan-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .scan-guide { width: 250px; height: 100px; position: relative; }
-        .scan-corners { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-        .corner { position: absolute; width: 20px; height: 20px; border: 3px solid #00ff00; }
-        .corner.top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
-        .corner.top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
-        .corner.bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
-        .corner.bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
-        .scan-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #00ff00, transparent); animation: scan 2s linear infinite; }
-        @keyframes scan { 0% { transform: translateY(-50px); } 100% { transform: translateY(50px); } }
-        
-        .scan-instruction { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: white; font-size: 14px; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        
-        .scan-result { background: #F7F8FA; padding: 30px; text-align: center; display: none; }
-        .scan-result.active { display: block; }
-        .result-icon { font-size: 48px; margin-bottom: 16px; }
-        .barcode-number { font-size: 18px; font-weight: 700; color: #2D3436; margin-bottom: 8px; font-family: monospace; }
-        .product-found { font-size: 16px; color: #5B5FDE; font-weight: 600; margin-bottom: 20px; }
-        .scan-again-btn { padding: 10px 24px; background: linear-gradient(135deg, #5B5FDE 0%, #8B5CF6 100%); color: white; border: none; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        
-        .manual-input { padding: 20px; background: #F7F8FA; border-top: 1px solid rgba(0,0,0,0.05); }
-        .manual-text { font-size: 12px; color: #636E72; text-align: center; margin-bottom: 12px; }
-        .barcode-input { width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 16px; font-family: monospace; text-align: center; margin-bottom: 12px; outline: none; }
-        .barcode-input:focus { border-color: #5B5FDE; }
-        .search-barcode-btn { width: 100%; padding: 12px; background: #5B5FDE; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        
-        .loading { text-align: center; padding: 40px; color: #636E72; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #F7F8FA; border-top-color: #5B5FDE; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px); background: #2D3436; color: white; padding: 12px 20px; border-radius: 20px; font-size: 14px; z-index: 10000; opacity: 0; transition: all 0.3s; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        
-        .no-results { text-align: center; padding: 60px 20px; color: #636E72; }
-        .no-results-icon { font-size: 64px; margin-bottom: 16px; }
-        
-        @keyframes fadeInUp {
+        .splash-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            opacity: 0;
+            animation: splashFadeIn 0.8s ease-out 0.3s forwards;
+        }
+        @keyframes splashFadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Home Screen --- */
+        .home-screen {
+            min-height: 100vh; padding: 2.5rem 1.5rem; display: flex; flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            max-width: 500px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;
+        }
+        .logo { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-text { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em; }
+        .lang-btn {
+            padding: 0.6rem 1rem;
+            background: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .lang-btn:hover { background-color: var(--hover-color); transform: translateY(-1px); }
+        .lang-btn:active { transform: translateY(0); background-color: var(--light-gray); }
+
+        .main-content {
+            flex: 1; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center; gap: 3rem;
+            width: 100%; max-width: 500px;
+        }
+        .welcome-text h1 {
+            font-size: clamp(2.2rem, 8vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.8rem;
+        }
+        .welcome-text p { font-size: 1.15rem; color: var(--accent-gray); font-weight: 500; }
+
+        .search-options { width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+        .search-option {
+            background: var(--primary-white);
+            border: 2px solid var(--primary-black);
+            border-radius: 0;
+            padding: 1.5rem;
+            display: flex; align-items: center;
+            gap: 1rem; cursor: pointer;
+            transition: all 0.2s ease-out;
+            box-shadow: 4px 4px 0px var(--primary-black);
+            position: relative;
+        }
+        .search-option:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--primary-black); background-color: var(--light-gray); }
+        .search-option:active { transform: translate(0, 0); box-shadow: 4px 4px 0px var(--primary-black); }
+
+        .option-icon {
+            width: 3.5rem; height: 3.5rem;
+            color: var(--primary-black);
+            border-radius: 0;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid var(--border-color);
+            font-size: 1.5rem;
+        }
+        .option-info { flex: 1; text-align: left; }
+        .option-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
+        .option-desc { font-size: 0.9rem; color: var(--accent-gray); line-height: 1.4; font-weight: 400; }
+
+        /* --- Page Transitions (Common) --- */
+        .page-slide-up, .page-slide-right {
+            position: fixed; inset: 0; background: var(--primary-white); z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.7, 0, 0.3, 1);
+            box-shadow: none;
+            overflow-y: auto; 
+        }
+        .page-slide-up { transform: translateY(100%); }
+        .page-slide-up.active { transform: translateY(0); }
+        .page-slide-right { transform: translateX(100%); }
+        .page-slide-right.active { transform: translateX(0); }
+
+        .page-header {
+            background: var(--primary-white);
+            padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.8rem;
+            border-bottom: 2px solid var(--primary-black);
+            z-index: 100;
+            position: sticky; top: 0;
+        }
+        .back-btn {
+            width: 44px; height: 44px; border-radius: 0;
+            background: var(--primary-black); color: var(--primary-white);
+            border: none;
+            font-size: 1.5rem; font-weight: 800; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease-out;
+            box-shadow: none;
+        }
+        .back-btn:hover { background-color: var(--accent-gray); transform: none; }
+        .back-btn:active { transform: none; box-shadow: none; }
+        .header-title { flex: 1; font-size: 1.1rem; font-weight: 700; text-align: center; margin-right: 2.75rem; }
+
+        /* --- Search Results Page --- */
+        .search-input {
+            flex: 1; padding: 0.8rem 1.2rem; border: 2px solid var(--primary-black);
+            border-radius: 0;
+            background: var(--light-gray); font-size: 1rem;
+            outline: none; transition: all 0.2s ease-out;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        .search-input:focus { border-color: var(--primary-black); background-color: var(--primary-white); box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1), 0 0 0 3px var(--focus-ring); }
+
+        .results-container { padding: 0.5rem 1.5rem; }
+        .result-card {
+            background: transparent; border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0.5rem; cursor: pointer; transition: background-color 0.15s ease-out;
+            position: relative;
+        }
+        .result-card:last-child { border-bottom: none; }
+        .result-card:hover { background-color: var(--light-gray); }
+        .result-name { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .result-desc { font-size: 0.85rem; color: var(--accent-gray); margin-bottom: 0.4rem; font-weight: 400; }
+        .result-company { font-size: 0.8rem; color: var(--accent-gray); opacity: 0.8; font-weight: 400; }
+
+        /* --- Detail Page --- */
+        .detail-hero {
+            padding: 2rem 1.5rem;
+            background: var(--primary-white);
+            border-bottom: 2px solid var(--primary-black);
+        }
+        .detail-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+        .detail-subtitle { font-size: 1rem; color: var(--accent-gray); margin-bottom: 1.5rem; font-weight: 500; }
+
+        .detail-content { padding: 0 1.5rem 2rem; }
+        .info-grid {
+            display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .info-item {
+            background: transparent; padding: 0.9rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .info-item:last-child { border-bottom: none; }
+        .info-label { font-size: 0.9rem; color: var(--accent-gray); font-weight: 500; }
+        .info-value { font-size: 0.95rem; font-weight: 600; text-align: right; color: var(--primary-black); }
+
+        .section-title { font-size: 1.2rem; font-weight: 700; margin: 2rem 0 1rem; }
+        .section-text { font-size: 0.9rem; color: var(--accent-gray); line-height: 1.6; font-weight: 400; }
+
+        /* --- Scanner Modal --- */
+        .scanner-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 1rem; }
+        .scanner-modal.active { display: flex; }
+        .barcode-modal-content {
+            background: var(--primary-white); border-radius: 0;
+            width: 100%; max-width: 500px; margin: 0 auto; overflow: hidden; display: flex; flex-direction: column;
+            border: 2px solid var(--primary-black);
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+        }
+        .barcode-header {
+            background: var(--primary-black); padding: 1rem 1.5rem; display: flex;
+            align-items: center; justify-content: space-between; color: var(--primary-white);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .close-scan-btn {
+            width: 36px; height: 36px; border-radius: 0;
+            background: rgba(255,255,255,0.2);
+            border: none; color: var(--primary-white); font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: background-color 0.2s;
+        }
+        .close-scan-btn:hover { background: rgba(255,255,255,0.3); }
+        .scan-title { font-size: 1.1rem; font-weight: 700; flex: 1; text-align: center; margin-right: 2.25rem; }
+
+        .scanner-container { position: relative; background: #000; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #scanner-viewport, #scanner-viewport video, #scanner-viewport canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .scan-guide { width: 70%; max-width: 300px; height: 120px; position: relative; border: 2px solid #00FF00; }
+        .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #00FF00; animation: scan 2s cubic-bezier(0.5, 0, 0.5, 1) infinite; box-shadow: 0 0 8px #00FF00; }
+        @keyframes scan { 0% { transform: translateY(0); } 100% { transform: translateY(118px); } }
+        .scan-instruction { position: absolute; bottom: -30px; left: 0; right: 0; text-align: center; color: #00FF00; font-size: 0.9rem; font-weight: 600; text-shadow: 0 0 5px rgba(0,255,0,0.5); }
+
+        .scan-result { background: var(--light-gray); padding: 2rem; text-align: center; display: none; }
+        .scan-result.active { display: block; }
+        .result-icon { font-size: 3rem; margin-bottom: 1rem; color: #00AA00; }
+        .barcode-number { font-size: 1.1rem; font-weight: 700; color: var(--primary-black); margin-bottom: 0.5rem; font-family: 'Roboto Mono', monospace; }
+        .product-found { font-size: 1rem; color: var(--accent-gray); font-weight: 500; margin-bottom: 1.5rem; }
+        .scan-again-btn {
+            padding: 0.8rem 1.5rem; background: var(--primary-black); color: var(--primary-white);
+            border: 2px solid var(--primary-black); border-radius: 0;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease-out;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+        }
+        .scan-again-btn:hover { background-color: var(--accent-gray); color: var(--primary-white); box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+
+        .manual-input { padding: 1.5rem; background: var(--light-gray); border-top: 1px solid var(--border-color); }
+        .manual-text { font-size: 0.85rem; color: var(--accent-gray); text-align: center; margin-bottom: 0.8rem; font-weight: 500; }
+        .barcode-input {
+            width: 100%; padding: 0.8rem 1rem; border: 2px solid var(--primary-black); border-radius: 0;
+            font-size: 1rem; font-family: 'Roboto Mono', monospace; text-align: center; margin-bottom: 0.8rem; outline: none;
+            background-color: var(--primary-white); transition: all 0.2s ease-out;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        .barcode-input:focus { border-color: var(--primary-black); background-color: var(--primary-white); box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1), 0 0 0 3px var(--focus-ring); }
+        .search-barcode-btn {
+            width: 100%; padding: 0.9rem; background: var(--primary-black); color: var(--primary-white);
+            border: 2px solid var(--primary-black); border-radius: 0;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease-out;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+        }
+        .search-barcode-btn:hover { background-color: var(--accent-gray); color: var(--primary-white); box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+
+        /* --- Utility & Feedback --- */
+        .loading { text-align: center; padding: 3rem; color: var(--accent-gray); font-weight: 500; font-size: 1rem; }
+        .spinner {
+            width: 36px; height: 36px; border: 3px solid var(--border-color);
+            border-top-color: var(--primary-black); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast {
+            position: fixed; bottom: 2.5rem; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--primary-black); color: var(--primary-white); padding: 0.8rem 1.2rem;
+            border-radius: 0;
+            font-size: 0.9rem; z-index: 10000; opacity: 0; transition: all 0.3s ease-out;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .no-results { text-align: center; padding: 4rem 1.5rem; color: var(--accent-gray); font-weight: 500; font-size: 1rem; }
+        .no-results-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+
+        /* Prevent zoom on mobile inputs */
+        @media (max-width: 600px) {
+            input[type="text"], input[type="number"] {
+                font-size: 16px; 
+            }
         }
     </style>
 </head>
