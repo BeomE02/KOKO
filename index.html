@@ -654,6 +654,9 @@
                 // 결과 아이콘을 에러로 변경
                 document.querySelector('#scanResult .result-icon').textContent = '❌';
                 
+                // 즉시 토스트 경고 메시지 표시
+                showToast(`등록되지 않은 제품입니다 (바코드: ${detectedBarcode})`);
+                
                 document.getElementById('productFound').innerHTML = `
                     <div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">
                         ${getText('product_not_found')}
@@ -669,9 +672,6 @@
                         제품 등록 요청
                     </button>
                 `;
-                
-                // 즉시 토스트 경고 메시지 표시
-                showToast(`등록되지 않은 제품입니다 (바코드: ${detectedBarcode})`);
                 
                 // 5초 후 자동으로 스캔 결과 화면 숨기고 다시 스캔 모드로
                 setTimeout(() => {
